@@ -1,0 +1,162 @@
+%%%%%%%%%%%
+%Generating Uniform Random Numbers  x in U(0,1)
+% Algorithm ( Abstract random number generator
+% 1.Initialize: Set X1 = S0. Set n = 2.
+%2. Transition: Set Xn = f(Xn?1).
+%3. Output: Set Un = g(Xn).
+%4. Repeat: Set n = n + 1. Repeat from step 2.
+% 
+%-------------------
+% 1. Linear Congruential Generator (LCG)
+%
+% basic formula: X_n=(a*X_(n-1)+c) (mod m) , where
+% a- multiplier, c- increment, m-modulo operator. There are integers. 
+% If c=0,the generator is set to be called multiplicative congruential
+% generator.
+% Algorithm 2.2.2 (Linear congruential generator).
+%Given a, c and m,
+%1. Initialize: Set X1 = S0. Set n = 2.
+%2. Transition: Set Xn = (aXn?1 + c) mod m.
+%3. Output: Set Un = Xn/m.
+%4. Repeat: Set n = n + 1. Repeat from step 2.
+%----------
+%
+% ex. 1 
+% Let a=6,m=11, c=0, X_0=1. Generate a LCG. 
+
+% The seq. is : 
+% X_1=1;
+% X_2=(6.X_1+0) mod 11 = 6;
+%X_3=(6.X_1+0) mod 11 = 3;
+%.....
+% The whole seq.is 1,6,3,7,9,10,5,8,4,2,1,6,3....
+% period d=m/m-1....
+
+
+N=12;
+a=6; 
+m=11;
+c=0;
+S_0=1;
+X=zeros(N,1); % create vector Nx1
+U=zeros(N,1); % create vector Nx1
+X(1)=S_0;
+U(1)=X(1)/m;
+for i=2:N
+    X(i)=mod(a*X(i-1)+c,m);
+    U(i)=X(i)/m;
+end
+%% write in the CommandWindow 
+X'
+U'
+%%%
+%%  X'
+%ans =
+ %    1     6     3     7     9    10     5     8     4     2     1     6
+%U'
+%ans =
+ % Columns 1 through 9
+%    0.0909    0.5455    0.2727    0.6364    0.8182    0.9091    0.4545    0.7273    0.3636
+ % Columns 10 through 12
+  %  0.1818    0.0909    0.5455
+%%%%%%--------------
+%% Basic formula for generating N random numbers in (a,b) %%
+ %%r= a+(b-a)*rand(N,1)  % rand - function from Matlab
+ 
+ %ex.2
+% Write in the command window: 
+r=rand(5); 
+r=-5+(5+5)*rand(10,1);
+%%
+
+%ex.3 
+% Obtain a vector of uniform random variables in (0,1).
+x = rand(1,1000);
+% Do a histogram to plot.
+% First get the height of the bars.
+[N,X] = hist(x,15);
+% Use the bar function to plot.
+bar(X,N,1,'w')
+title('Histogram of Uniform Random Variables')
+xlabel('X')
+ylabel('Frequency')
+% Generate 3 random samples of size 5.
+x = zeros(3,5); % Allocate the memory.
+for i = 1:3
+ rand('state',i) % set the state
+ x(i,:) = rand(1,5);
+end
+rand('state',2)
+xt = rand(1,5);
+%%
+%% ex.4
+%MRG32k3a.m
+m1=2^32-209; m2=2^32-22853;
+ax2p=1403580; ax3n=810728;
+ay1p=527612; ay3n=1370589;
+X=[12345 12345 12345]; % Initial X
+Y=[12345 12345 12345]; % Initial Y
+N=100; % Compute the sequence for N steps
+U=zeros(1,N);
+for t=1:N
+Xt=mod(ax2p*X(2)-ax3n*X(3),m1);
+Yt=mod(ay1p*Y(1)-ay3n*Y(3),m2);
+if Xt <= Yt
+U(t)=(Xt - Yt + m1)/(m1+1);
+else
+U(t)=(Xt - Yt)/(m1+1);
+end
+X(2:3)=X(1:2); X(1)=Xt; Y(2:3)=Y(1:2); Y(1)=Yt;
+end
+%%ex. 5
+% MATLAB Script to implement the Grogono
+% Linear Congruent Random Number Generator..
+clear all; close all; clc;
+a=25173; c=13849; m=2^16;
+seedg=input('The seed for the random number ');
+N=input('The number of random numbers needed ');
+for k=1:N
+    rn(k)=mod((a*seedg+c),m);
+    seedg=rn(k);
+end;
+disp('The Random Numbers are');
+disp(rn);
+% end of grogono.m 
+
+%ex.7
+
+
+function [p, mean, var, oneperiod]=lcg(a, c, m, x)
+% Linear Congruential Generators
+% x the initial seed, 0 <= c < m
+% a the multiplier, 0 <= a < m, normally greater than 1
+% c the increment 0 <= c < m
+% m the modulus, prime numbers are best
+xseq=x;
+for j=1:m+5  % generate m+5 integers
+  x= rem((a*x+c),m);   % (a*x + c) mod m;
+  xseq=[xseq;x];  % concatenate numbers, in a cloumn
+  row=xseq';  % transpose to a row
+end
+
+% find out the period
+i=1;
+j=2;
+while row(i) ~= row(j)
+  if j > m  % integer row(i) doesn?t repeat in the sequence
+    i=i+1;  % see if the next integer repeats or not
+    j=i;
+  end;
+  j=j+1;
+end;
+p=j-i;
+% one period of random integer number
+oneperiod=row(i:i+p+2);   % one period and three integers
+
+% calculate the real number of a period p
+ r=row(i:i+p-1)/m;  % divide by m, so distributed in [0,1)
+ mean = sum(r)/p; % average
+ diff=mean-r;
+ square=diff.*diff;
+ var=sum(square)/p; % variance
+end
