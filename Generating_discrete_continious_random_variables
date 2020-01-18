@@ -1,0 +1,74 @@
+%%%   The Acceptance-Rejection method 
+
+%ex.1 
+%Suppose we want to generate an exponential random variable with parameter
+%1 conditional on it being less than 1. We can write this density as
+% f(x)=(e^(-x)I{x<=1})/(P(X<=1)) equal to e^(-x)I{x<=1}.
+
+N=10^6;
+X = zeros(N,1);
+for i = 1:N
+X_tilde = rand;
+while rand > exp(-X_tilde)
+X_tilde = rand;
+end
+X(i) = X_tilde;
+end
+ 
+%ex. 2
+%(A Poisson random variable condition on being less than 11). Suppose we
+%want to generate a Poisson random variable, X, with parameter ?, conditional on the event
+%{X ? 10}. The pmf of X is given by 
+%P(X=i)=p_i=(e^(-lambda*(lambda^i)/i!))I{i<=10}/(sum_{j=0}^{10} e^(-lmbda)*(lambda^j)/j!) 
+% which is equal to  e^(-lambda) * lambda^i/i! *I{i<=10}.
+
+N=10^5;
+X = zeros(N,1);
+for i = 1:N
+ X_tilde = floor(11*rand);
+ while rand > 1/factorial(X_tilde)
+ X_tilde = floor(11*rand);
+ end
+ X(i) = X_tilde;
+end
+hist(X,max(X)+1)
+
+%ex. 3
+%We shall illustrate the acceptance-rejection method by generating random
+%variables from the beta distribution with parameters and
+%[Ross, 1997]. This yields the following pdf f(x)=2x 0<x<1.
+
+c = 2; % constant
+n = 100; % Generate 100 random variables.
+% Set up the arrays to store variates.
+x = zeros(1,n); % random variates
+xy = zeros(1,n);% corresponding y values
+rej = zeros(1,n);% rejected variates
+rejy = zeros(1,n); % corresponding y values
+irv = 1;
+irej = 1;
+while irv <= n
+ y = rand(1); % random number from g(y)
+ u = rand(1); % random number for comparison
+ if u <= 2*y/c;
+ x(irv) = y;
+ xy(irv) = u*c;
+ irv = irv+1
+ else
+ rej(irej) = y;
+ rejy(irej) = u*c; % really comparing u*c<=2*y
+ irej = irej + 1
+ end
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+function X = csmvrnd(mu,covm,n)
+d = length(mu);
+% Get Cholesky factorization of covariance.
+R = chol(covm);
+% Generate the standard normal random variables.
+Z = randn(n,d);
+X = Z*R + ones(n,1)*mu';
+end
+
+%%%%%%%%%%%%%%%%%
