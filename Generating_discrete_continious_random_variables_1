@@ -1,0 +1,173 @@
+% Non-Uniform Random Variable Generation
+%
+% The Inverse Transform
+%
+%ex.1 (Exponential distribution).
+%Suppose we wish to simulate replicates of an exponential random variable, X. The cdf of the exponential distribution is given by 
+%F(x)=1-exp(-lambda*x).
+% To find F^(-1)(u) we solve F(x)=u=1-exp(-lambda*x)=>
+% x=(-1/lambda)*log(1-u)=F^(-1)(u)=x=(-1/lambda)*log(u)
+%
+lambda = 1;
+X = -1/lambda*log(rand);
+
+
+%ex. 2
+%We would like to simulate a discrete random variable X that has probability
+% mass function given by p(x=0)=0.3; p(x=1)=0.2, p(x=2)=0.5. The cumulative distribution function (cdf) is
+% F(x)={(0; x<0), (0.3, 0<=x<1),(0.5, 1<=x<2),(1.0, x>=2)}. We generate
+% random variable X by X={(0, U<=0.3),(1, 0.3<U<=0.5),(2, 0.5<U<=1)}.
+%
+%Set up storage space for the variables.
+X = zeros(1,100);
+% These are the x's in the domain.
+x = 0:2;
+% These are the probability masses.
+pr = [0.3 0.2 0.5];
+% Generate 100 rv’s from the desired distribution.
+for i = 1:100
+ u = rand; % Generate the U.
+ if u <= pr(1)
+ X(i) = x(1);
+ elseif u <= sum(pr(1:2))
+% It has to be between 0.3 and 0.5.
+ X(i) = x(2);
+ else
+ X(i) = x(3); % It has to be between 0.5 and 1.
+ end
+end
+% Find the proportion of each number.
+x0 = length(find(X==0))/100;
+x1 = length(find(X==1))/100;
+x2 = length(find(X==2))/100;
+
+%ex. 3
+%Suppose we wish to draw N = 105 independent copies of a discrete random variable
+%taking values 1,.., 5 with probabilities 0.2, 0.3, 0.1, 0.05, 0.35, respectively.
+%The following MATLAB program implements the inverse transform method to
+%achieve this, and records the frequencies of occurrences of 1, . . . , 5.
+%
+%discIT.m
+p = [0.2,0.3,0.1,0.05,0.35];
+N = 10^5;
+x = zeros(N,1);
+for i=1:N
+x(i) = min(find(rand<cumsum(p))); %draws from p
+end
+freq = hist(x,1:5)/N
+
+% freq = 0.1999    0.2998    0.1006    0.0497    0.3500
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Generating Continuous Random Variables 
+
+% ex.1 
+% Generate the Exponential distrtibution with cdf F(x)=1-e^(lambda*x) x>0
+% The inverse u=-(1/lambda)*log(1-u)=-(1/lambda)*log(u).
+
+% Set up the parameters.
+lam = 2;
+n = 1000;
+% Generate the random variables.
+uni = rand(1,n);
+X = -log(uni)/lam;
+% Get the values to draw the theoretical curve.
+x = 0:.1:5;
+% This is a function in the Statistics Toolbox.
+y = exppdf(x,1/2);
+% Get the information for the histogram.
+[N,h] = hist(X,10);
+% Change bar heights to make it correspond to 
+% the theoretical density.
+N = N/(h(2)-h(1))/n;
+% Do the plots.
+bar(h,N,1,'w')
+hold on
+plot(x,y)
+hold off
+xlabel('X')
+ylabel('f(x) - Exponential')
+
+%ex.2
+%Gamma distribution 
+%generating a gamma random variable with parameters , where t is an
+%integer. Recall that it has the following distribution function
+% F(x)=int_{0}^{lamdba*x} (e^(-y)*y(t-1))/(t-1)! dy with inverse function
+% F^(-1)(u)=-1/lambda* (prod_{1}^{t}U_i).
+
+n = 1000;
+t = 3;
+lam = 2;
+% Generate the uniforms needed. Each column
+% contains the t uniforms for a realization of a
+% gamma random variable.
+U = rand(t,n);
+logU = -log(U)/lam;
+X = sum(logU);
+% Now do the histogram.
+[N,h] = hist(X,10);
+% Change bar heights.
+N = N/(h(2)-h(1))/n;
+% Now get the theoretical probability density.
+% This is a function in the Statistics Toolbox.
+x = 0:.1:6;
+y = gampdf(x,t,1/lam);
+bar(h,N,1,'w')
+hold on
+plot(x,y,'k')
+hold off
+
+% ex. 3 
+% Beta distrubution
+%https://en.wikipedia.org/wiki/Beta_distribution
+
+%rvs = pdfrnd(par1,par2,nrow,ncol);
+% Let a = 3, b = 3
+n = 500;
+a = 3; % lambda
+b = 3; %beta
+rvs = betarnd(a,b,1,n);
+% Now do the histogram.
+[N,h] = hist(rvs,10);
+% Change bar heights.
+N = N/(h(2)-h(1))/n;
+% Now get the theoretical probability density.
+x = 0:.05:1;
+y = betapdf(x,a,b);
+plot(x,y)
+axis equal
+bar(h,N,1,'w')
+hold on
+plot(x,y,'k')
+hold off 
+
+% try with a=b=0.5/ 0.3
+
+%ex.4 
+% Cholesky factorization 
+% X=Z*R+mu^(T)
+%Z-> dx1 vector normal distr.
+%mu-> dx1 vector representing the mean
+%R-> dxd matrix , whree R^T*R=Ksi matrix
+
+ %function X = csmvrnd(mu,covm,n);
+% This function will return n multivariate random
+% normal variables with d-dimensional mean mu and
+% covariance matrix covm. Note that the covariance
+% matrix must be positive definite (all eigenvalues
+% are greater than zero), and the mean
+% vector is a column
+function X = csmvrnd(mu,covm,n)
+d = length(mu);
+% Get Cholesky factorization of covariance.
+R = chol(covm);
+% Generate the standard normal random variables.
+Z = randn(n,d);
+X = Z*R + ones(n,1)*mu';
+end
+% Generate the multivariate random normal variables.
+mu = [-2;3];
+covm = [1 0.7 ; 0.7 1];
+X = csmvrnd(mu,covm,500);
+ mean(X) 
+ corrcoef(X)
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
